@@ -1,0 +1,80 @@
+---
+title: "Predicting Properties of Steam Table using Artifical Neural Network"
+output:
+  html_notebook: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+1. 
+Importing steam Table data from a text file(from NIST).
+
+```{r}
+minmax<-function(x)
+{
+  (x-min(x))/(max(x)-min(x))
+}
+library(MASS)
+data<-Data
+data
+```
+
+Normalizing and splitting the data into 70-30 ratio for Testing and Training.
+
+```{r}
+dN<-apply(data,2,minmax)
+library(caTools)
+Split<-sample.split(dN[,25],SplitRatio=0.7)
+train<-subset(dN,Split==TRUE)
+test<-subset(dN,Split==FALSE)
+```
+
+Plotting the Neural Network based on optimal number of Nodes. For predicting Thermal Conductivity from all other data.
+
+```{r}
+library(neuralnet)
+nn<-neuralnet(as.formula(InternalEnergy + Enthalpy + Entropy ~ Pressure + Temperature),train,hidden=c(20,10,5),err.fct='sse',act.fct='logistic')
+plot(nn)
+```
+
+Testing on Data.
+
+```{r}
+output<-predict(nn,test[,-3:-25])
+Err_InternalEnergy<-mean((output[,1] - test[,5])^2)
+Err_InternalEnergy
+```
+```{r}
+Err_Enthalpy<-mean((output[,2] - test[,6])^2)
+Err_Enthalpy
+```
+
+```{r}
+Err_Entropy<-mean((output[,3] - test[,7])^2)
+Err_Entropy
+```
+```{r}
+plot(output[,1],test[,5],type='l',ylab="Original Internal Energy",xlab="Predicted Internal Energy")
+```
+```{r}
+plot(output[,2],test[,6],type='l',ylab="Original Enthalpy",xlab="Predicted Enthalpy")
+```
+```{r}
+plot(output[,3],test[,7],type='l',ylab="Original Entropy",xlab="Predicted Entropy")
+```
+```{r}
+plot(output[,1],t='l')
+lines(test[,5],col='red')
+```
+```{r}
+plot(output[,2],t='l')
+lines(test[,6],col='red')
+```
+```{r}
+plot(output[,3],t='l')
+lines(test[,7],col='red')
+```
+```{r}
+summary(Data)
+summary(nn)
+```
